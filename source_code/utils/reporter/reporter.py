@@ -58,7 +58,6 @@ class Reporter(object):
         rep.log("Here's my message", lvl=logging.INFO)
 
     """
-
     def __init__(
         self, log_path=None, config_path=None, logger=None, printer=None
     ):

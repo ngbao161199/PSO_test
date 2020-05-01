@@ -70,7 +70,7 @@ from ..backend.topology import Topology
 from ..backend.handlers import BoundaryHandler, VelocityHandler
 #from ..base import SwarmOptimizer
 from ..utils.reporter import Reporter
-
+from tqdm import tqdm 
 
 class SwarmOptimizer(abc.ABC):
     def __init__(
@@ -333,9 +333,11 @@ class General(SwarmOptimizer):
             ftol_iter=ftol_iter,
             init_pos=init_pos,
         )
-
+        print("log_path: ", log_path)
         # Initialize logger
         self.rep = Reporter(log_path = log_path) # logger=logging.getLogger(__name__)
+        #self.rep.log("Here's my message", lvl=logging.INFO)
+
         # Initialize the resettable attributes
         self.reset()
         # Initialize the topology and check for type
@@ -347,7 +349,7 @@ class General(SwarmOptimizer):
         self.vh = VelocityHandler(strategy=vh_strategy)
         self.name = __name__
 
-    def optimize(self, objective_func, iters, maxiter, para, n_processes=None, **kwargs):
+    def optimize(self, objective_func, log_path, iters, maxiter, para, n_processes=None, **kwargs):
         """Optimize the swarm for a number of iterations
 
         Performs the optimization to evaluate the objective
@@ -371,11 +373,13 @@ class General(SwarmOptimizer):
         tuple
             the global best cost and the global best position.
         """
+        self.rep = Reporter(log_path = log_path)
         self.rep.log("Obj. func. args: {}".format(kwargs), lvl=logging.DEBUG)
         self.rep.log(
             "Optimize for {} iters with {}".format(iters, self.options),
             lvl=logging.INFO,
         )
+        self.rep.log("-------")
 
         # Populate memory of the handlers
         self.bh.memory = self.swarm.position
@@ -424,7 +428,7 @@ class General(SwarmOptimizer):
                     self.swarm, self.bounds, self.bh)
 
         if para == 10:
-            for i in self.rep.pbar(2000, self.name):
+            for i in self.rep.pbar(maxiter, self.name):
                 if dem == maxiter:
                     break
                 # Compute cost for current position and personal best

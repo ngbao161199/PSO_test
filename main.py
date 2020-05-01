@@ -5,13 +5,14 @@ from source_code.utils.plotters import plot_cost_history
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+import pandas as pd 
 import sys
 import os
 
 def input(choice, function, para, indi, mseed):
     if choice == 1:
-        folder_path = "/logs/" + str(para) + "_" + str(indi) + "_" + "ring" 
-        plot_folder = "/plots/" + str(para) + "_" + str(indi) + "_" + "ring"
+        folder_path = "logs/" + str(para) + "_" + str(indi) + "_" + "ring" 
+        plot_folder = "plots/" + str(para) + "_" + str(indi) + "_" + "ring"
         x= Ring()
     if choice == 2:
         folder_path = "logs/" + str(para) + "_" + str(indi) + "_" + "star"
@@ -59,6 +60,13 @@ options = {'c1': 1.49618, 'c2': 1.49618, 'w':0.7298, 'k':5, 'p': 2}
 opt = [1, 2, 3, 4] # 'Rastrigin', 'Beale', 'Himmelblau', 'Cross_in_tray'
 neighbor = [1,2] # 1 - star, 2 -  ring
 
+my_columns = ['name', 'c1=c2', 'w', 'k', 'p', 'indi', 'para', 'function', 'neighbor', 'best_cost', 'best_pos']
+if not os.path.isfile('summary.csv'):
+    my_columns = np.array(my_columns)
+    my_columns = my_columns.reshape(-1, my_columns.shape[0])
+
+    df = pd.DataFrame(my_columns)
+    df.to_csv("summary.csv", mode='a', header=None)
 
 if len(argv) != 2:
     print('Wrong!!!\nPlease use format: python script seed')
@@ -74,8 +82,40 @@ else:
     for choice in neighbor:
         for function in opt:
             output_path, plot_path, f , x = input(choice, function, para, indi, mseed)
+            
+            #####################
+                # create dataframe
+            ######################
+            list_attr = [output_path, options['c1'], options['w'], options['k'], options['p'], indi, para]
+            
+            # add function
+            if function == 1:
+                list_attr.append('Rastrigin')
+            elif function == 2:
+                list_attr.append('Beale')
+            elif function == 3:
+                list_attr.append('Himmelblau')
+            else:
+                list_attr.append('Cross_in_tray')
+            
+            # add neighbor
+            if choice == 1:
+                list_attr.append('star')
+            else:
+                list_attr.append('ring')
+            
             optimizer = ps.pso.General(log_path = output_path, n_particles=indi, dimensions=para, options=options, topology = x)
-            best_cost, best_pos = optimizer.optimize(f, iters=50, maxiter=1000000, para=para)
+            best_cost, best_pos = optimizer.optimize(f, log_path=output_path, iters=50, maxiter=100, para=para)
+
+            # add best_cost, best_pos to data frame
+            list_attr.append(best_cost)
+            list_attr.append(best_pos)
+            arr_attr = np.array(list_attr)
+            arr_attr = arr_attr.reshape(-1, arr_attr.shape[0])
+
+            df = pd.DataFrame(arr_attr)
+            df.to_csv("summary.csv", mode='a', header=None)
+
             optimizer.cost_history
             plt.figure()
             plot_cost_history(optimizer.cost_history)
@@ -92,8 +132,40 @@ else:
             for choice in neighbor:
                 for function in opt:
                     output_path, plot_path, f , x = input(choice, function, para, num_individuals, mseed)
+
+                    #####################
+                        # create dataframe
+                    ######################
+                    list_attr = [output_path, options['c1'], options['w'], options['k'], options['p'], num_individuals, para]
+                    
+                    # add function
+                    if function == 1:
+                        list_attr.append('Rastrigin')
+                    elif function == 2:
+                        list_attr.append('Beale')
+                    elif function == 3:
+                        list_attr.append('Himmelblau')
+                    else:
+                        list_attr.append('Cross_in_tray')
+                    
+                    # add neighbor
+                    if choice == 1:
+                        list_attr.append('star')
+                    else:
+                        list_attr.append('ring')
+
                     optimizer = ps.pso.General(log_path = output_path, n_particles=num_individuals, dimensions=para, options=options, topology = x)
-                    best_cost, best_pos = optimizer.optimize(f, iters=50, maxiter=1000000, para=para)
+                    best_cost, best_pos = optimizer.optimize(f, log_path=output_path, iters=50, maxiter=100, para=para)
+
+                    # add best_cost, best_pos to data frame
+                    list_attr.append(best_cost)
+                    list_attr.append(best_pos)
+                    arr_attr = np.array(list_attr)
+                    arr_attr = arr_attr.reshape(-1, arr_attr.shape[0])
+
+                    df = pd.DataFrame(arr_attr)
+                    df.to_csv("summary.csv", mode='a', header=None)
+
                     optimizer.cost_history
                     plt.figure()
                     plot_cost_history(optimizer.cost_history)
